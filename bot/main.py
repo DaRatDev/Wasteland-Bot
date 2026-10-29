@@ -10,6 +10,7 @@ from .store import Store
 
 log = logging.getLogger("wasteland")
 
+VERSION = "0.2.0"
 TICK_MINUTES = 5
 
 
@@ -165,6 +166,7 @@ def main() -> None:
         level=cfg.log_level,
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
     )
+    log.info("Wasteland Bot v%s starting", VERSION)
     WastelandBot(cfg).run(cfg.token, log_handler=None)
 
 
