@@ -47,3 +47,15 @@ def test_store_round_trip(tmp_path):
     store.log_activity("message", 1, ts=300)
     store.log_activity("reaction", 0.25, ts=50)
     assert store.activity_since(100) == {"message": 2}
+
+
+def test_announces_rising_marks():
+    assert meter.next_announced_mark(30.0, 20) == 30
+    assert meter.next_announced_mark(29.9, 20) is None
+    assert meter.next_announced_mark(55, 30) == 50  # skipped 40, jumps straight to 50
+
+
+def test_falling_needs_margin_so_it_does_not_flip_flop():
+    assert meter.next_announced_mark(39.8, 40) is None   # one message under the line
+    assert meter.next_announced_mark(37.5, 40) is None
+    assert meter.next_announced_mark(36.9, 40) == 30

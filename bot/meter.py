@@ -49,3 +49,22 @@ def from_silence(days_silent: float, now: float) -> MeterState:
 def milestone(percent: float) -> int:
     """The 10% band the meter is in: 0, 10, 20 ... 100."""
     return int(clamp(percent) // 10) * 10
+
+
+# The meter has to drop this far below a 10% mark before a "going down"
+# alert fires, so it doesn't flip-flop on the edge of a mark.
+DROP_MARGIN = 3
+
+
+def next_announced_mark(percent: float, last_mark: int) -> int | None:
+    """The new 10% mark to announce, or None if nothing changed.
+
+    Rising: announce as soon as the meter reaches the next 10% mark.
+    Falling: announce once the meter is clearly below the last mark.
+    """
+    current = milestone(percent)
+    if current > last_mark:
+        return current
+    if current < last_mark and percent < last_mark - DROP_MARGIN:
+        return current
+    return None

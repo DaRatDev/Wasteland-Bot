@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS activity (
     points REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS activity_ts ON activity (ts);
+CREATE TABLE IF NOT EXISTS meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -54,3 +58,14 @@ class Store:
             "SELECT kind, SUM(points) FROM activity WHERE ts >= ? GROUP BY kind", (ts,)
         ).fetchall()
         return dict(rows)
+
+    def get_meta(self, key: str) -> str | None:
+        row = self.db.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        return row[0] if row else None
+
+    def set_meta(self, key: str, value: str) -> None:
+        self.db.execute(
+            "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
+        self.db.commit()
