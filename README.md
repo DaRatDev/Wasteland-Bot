@@ -26,14 +26,15 @@ You need DSM 7.2+ with **Container Manager** installed from Package Center.
 
 1. In **File Station**, create the folder `docker/wasteland-bot` (on `/volume1`).
 2. Download this repo (**Code → Download ZIP** on GitHub), unzip it, and upload the contents into that folder so `docker-compose.yml` sits directly inside `docker/wasteland-bot`.
-3. Make a copy of `.env.example` called `.env` in the same folder and fill in the three values from step 1. (Tip: edit it on your computer and upload it. File Station hides files starting with `.` unless you enable showing hidden files.)
-4. Open **Container Manager → Project → Create**:
+3. Inside `docker/wasteland-bot`, create an empty folder named `data`. Synology won't create it for you, and the bot fails to start without it.
+4. Make a copy of `.env.example` called `.env` in the same folder and fill in the three values from step 1. (Tip: edit it on your computer and upload it. File Station hides files starting with `.` unless you enable showing hidden files.)
+5. Open **Container Manager → Project → Create**:
    - Project name: `wasteland-bot`
    - Path: `/volume1/docker/wasteland-bot`
    - Source: **Use existing docker-compose.yml**
    - Click through and **Done**. It builds the image and starts the bot.
-5. Check **Container → wasteland-bot → Log**. You should see `Logged in as ...` and `Connected to server: The Wasteland`.
-6. In Discord, type `/ping`. The bot should reply.
+6. Check **Container → wasteland-bot → Log**. You should see `Logged in as ...` and `Connected to server: The Wasteland`.
+7. In Discord, type `/ping`. The bot should reply.
 
 The bot restarts automatically if the NAS reboots. Its saved data goes in `docker/wasteland-bot/data`.
 
