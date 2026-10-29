@@ -2,7 +2,25 @@
 
 A Discord bot for **The Wasteland** that tracks the **Waste-O-Meter**: how close the server is to being a completely barren wasteland. 90 days of total silence = 100%.
 
-> Status: step 1 (foundation). The bot logs in, connects to your server and answers `/ping`. The meter, announcements, visuals and excuses come in the next steps.
+> Status: step 2. The Waste-O-Meter is tracking activity and `/wastemeter` shows the current reading. Announcements, visuals and excuses come next.
+
+## How the Waste-O-Meter works
+
+- While the server is quiet, the meter climbs about **1.1% a day**, so 90 silent days = 100%.
+- Activity knocks it back down a bit. Every 4 activity points = -1%:
+  - a message = 1 point
+  - a reaction = 0.25 points
+  - each person in voice = 0.1 points per minute (an hour of one person in voice is 6 points, or -1.5%)
+- Bots don't count.
+- On the very first start, the meter begins based on how long ago the last message in the server was.
+- The reading is saved in `data/wasteland.db`, so restarts and updates don't reset it.
+
+The numbers live at the top of `bot/meter.py` if you want to tune them.
+
+## Commands
+
+- `/wastemeter`: shows the current reading
+- `/ping`: checks the bot is alive
 
 ---
 
