@@ -2,7 +2,7 @@
 
 A Discord bot for **The Wasteland** that tracks the **Waste-O-Meter**: how close the server is to being a completely barren wasteland. 90 days of total silence = 100%.
 
-> Status: step 3. The Waste-O-Meter tracks activity, posts a weekly report and 10% alerts in #general, and draws a wasteland gauge image. Excuse replies come next.
+> Status: all four steps done. The Waste-O-Meter tracks activity, posts a weekly report and 10% alerts in #general with a wasteland gauge image, and the bot answers anyone who talks to it with a wasteland excuse.
 
 ## How the Waste-O-Meter works
 
@@ -23,6 +23,10 @@ Everything is posted in the channel set by `ANNOUNCE_CHANNEL_ID`, with a Waste-O
 
 - **Weekly report**: every Monday at 12:00 (change it with `WEEKLY_DAY` and `WEEKLY_HOUR` in `.env`). If the bot was offline at that time, it skips that week instead of posting a day late.
 - **10% alerts**: whenever the meter reaches a new 10% mark going up, or falls clearly below one (3% under) going down, so it doesn't spam when the reading hovers around a mark.
+
+## Talking to the bot
+
+Mention the bot, reply to one of its messages, or DM it, and it answers with a random wasteland excuse for why it can't talk. Each person gets at most one excuse every 30 seconds.
 
 ## Commands
 
