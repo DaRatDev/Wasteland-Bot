@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
@@ -19,6 +20,9 @@ class Config:
     announce_channel_id: int | None
     data_dir: Path
     log_level: str
+    timezone: ZoneInfo
+    weekly_day: int   # 0 = Monday ... 6 = Sunday
+    weekly_hour: int  # 0-23, local time
 
 
 def load() -> Config:
@@ -35,4 +39,7 @@ def load() -> Config:
         announce_channel_id=_int("ANNOUNCE_CHANNEL_ID"),
         data_dir=data_dir,
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        timezone=ZoneInfo(os.getenv("TZ", "UTC") or "UTC"),
+        weekly_day=_int("WEEKLY_DAY") if _int("WEEKLY_DAY") is not None else 0,
+        weekly_hour=_int("WEEKLY_HOUR") if _int("WEEKLY_HOUR") is not None else 12,
     )

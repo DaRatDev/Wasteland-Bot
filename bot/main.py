@@ -1,16 +1,19 @@
+import asyncio
+import io
 import logging
 import time
+from datetime import datetime, timedelta
 
 import discord
 from discord import app_commands
 from discord.ext import tasks
 
-from . import config, meter
+from . import config, messages, meter, visual
 from .store import Store
 
 log = logging.getLogger("wasteland")
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 TICK_MINUTES = 5
 
 
@@ -42,7 +45,8 @@ class WastelandBot(discord.Client):
                 return
             self._climb()
             await interaction.response.send_message(
-                f"☢️ **Waste-O-Meter: {self.state.percent:.1f}%** of the way to a completely barren wasteland."
+                f"☢️ **Waste-O-Meter: {self.state.percent:.1f}%** of the way to a completely barren wasteland.",
+                file=self._meter_image(),
             )
 
         # Syncing to one guild makes slash commands show up instantly
@@ -119,11 +123,53 @@ class WastelandBot(discord.Client):
         self._save()
 
     def _check_milestone(self) -> None:
-        current = meter.milestone(self.state.percent)
-        if current != self.last_milestone:
-            log.info("Waste-O-Meter crossed from %d%% to %d%%", self.last_milestone, current)
-            # Announcing the change in #general comes in step 3
-            self.last_milestone = current
+        mark = meter.next_announced_mark(self.state.percent, self.last_milestone)
+        if mark is None:
+            return
+        log.info("Waste-O-Meter moved from the %d%% mark to %d%%", self.last_milestone, mark)
+        text = messages.mark_reached(mark, self.last_milestone)
+        self.last_milestone = mark
+        asyncio.get_running_loop().create_task(self._announce(text))
+
+    # --- announcements ----------------------------------------------------
+
+    def _meter_image(self) -> discord.File:
+        png = visual.render(self.state.percent)
+        return discord.File(io.BytesIO(png), filename="waste-o-meter.png")
+
+    async def _announce(self, text: str) -> None:
+        channel = self.get_channel(self.cfg.announce_channel_id) if self.cfg.announce_channel_id else None
+        if channel is None:
+            log.warning("Skipping announcement, no announcement channel: %s", text)
+            return
+        try:
+            await channel.send(text, file=self._meter_image())
+        except discord.HTTPException:
+            log.exception("Could not post announcement")
+
+    def _last_weekly_slot(self, now: datetime) -> datetime:
+        """The most recent weekly report time at or before now."""
+        slot = now.replace(hour=self.cfg.weekly_hour, minute=0, second=0, microsecond=0)
+        slot -= timedelta(days=(now.weekday() - self.cfg.weekly_day) % 7)
+        if slot > now:
+            slot -= timedelta(days=7)
+        return slot
+
+    async def _maybe_post_weekly(self) -> None:
+        now = datetime.now(self.cfg.timezone)
+        slot = self._last_weekly_slot(now)
+        last = self.store.get_meta("last_weekly")
+        if last is None:
+            # First run: don't post straight away, wait for the next slot
+            self.store.set_meta("last_weekly", slot.isoformat())
+            return
+        if datetime.fromisoformat(last) >= slot:
+            return
+        self.store.set_meta("last_weekly", slot.isoformat())
+        # If the bot was offline for a day or more, skip this one instead of posting late
+        if now - slot > timedelta(days=1):
+            return
+        await self._announce(messages.weekly(self.state.percent))
 
     def _is_tracked(self, guild: discord.Guild | None) -> bool:
         if guild is None:
@@ -144,6 +190,7 @@ class WastelandBot(discord.Client):
             self._check_milestone()
             self._save()
         log.debug("Tick: %.2f%% (%d in voice)", self.state.percent, people_in_voice)
+        await self._maybe_post_weekly()
 
     # --- activity events --------------------------------------------------
 
