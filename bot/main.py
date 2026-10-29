@@ -13,8 +13,9 @@ from .store import Store
 
 log = logging.getLogger("wasteland")
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 TICK_MINUTES = 5
+EXCUSE_COOLDOWN_SECONDS = 30  # per person, so the bot can't be spammed
 
 
 class WastelandBot(discord.Client):
@@ -28,6 +29,7 @@ class WastelandBot(discord.Client):
         self.store = Store(cfg.data_dir)
         self.state: meter.MeterState | None = None
         self.last_milestone = 0
+        self.last_excuse_at: dict[int, float] = {}
 
     # --- setup -----------------------------------------------------------
 
@@ -195,9 +197,32 @@ class WastelandBot(discord.Client):
     # --- activity events --------------------------------------------------
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot or not self._is_tracked(message.guild):
+        if message.author.bot:
             return
-        self._record("message")
+        if self._is_addressed(message):
+            await self._reply_with_excuse(message)
+        if self._is_tracked(message.guild):
+            self._record("message")
+
+    def _is_addressed(self, message: discord.Message) -> bool:
+        """True for a DM, an @mention of the bot, or a reply to one of its messages."""
+        if message.guild is None:
+            return True
+        if self.user in message.mentions:
+            return True
+        ref = message.reference
+        resolved = ref.resolved if ref else None
+        return isinstance(resolved, discord.Message) and resolved.author == self.user
+
+    async def _reply_with_excuse(self, message: discord.Message) -> None:
+        now = time.monotonic()
+        if now - self.last_excuse_at.get(message.author.id, -EXCUSE_COOLDOWN_SECONDS) < EXCUSE_COOLDOWN_SECONDS:
+            return
+        self.last_excuse_at[message.author.id] = now
+        try:
+            await message.reply(messages.excuse(), mention_author=False)
+        except discord.HTTPException:
+            log.exception("Could not reply with an excuse")
 
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
         if payload.member is None or payload.member.bot:
