@@ -58,7 +58,11 @@ The bot restarts automatically if the NAS reboots. Its saved data goes in `docke
 
 ### Updating
 
-Upload the new files over the old ones (keep your `.env` and `data` folder), then in **Container Manager → Project → wasteland-bot** choose **Action → Build**, which rebuilds and restarts it.
+1. Upload the new `bot` folder (and `docker-compose.yml`, `requirements.txt` or `Dockerfile` if they changed) over the old ones. Keep your `.env` and `data` folder.
+2. In **Container Manager → Project → wasteland-bot**, choose **Action → Stop**, then **Action → Build**.
+3. Check the log: the first line says `Wasteland Bot vX.Y.Z starting`, so you can confirm the new version is running.
+
+If the log still shows an old version, Container Manager reused the old image. Stop the project, delete the `wasteland-bot` container (Container tab) and image (Image tab), then Build again.
 
 ### Time zone
 

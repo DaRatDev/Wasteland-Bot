@@ -2,6 +2,8 @@ services:
   wasteland-bot:
     build: .
     image: wasteland-bot:latest
+    # Always rebuild from the files on disk; without this Container Manager reuses the old image
+    pull_policy: build
     container_name: wasteland-bot
     restart: unless-stopped
     env_file: .env
