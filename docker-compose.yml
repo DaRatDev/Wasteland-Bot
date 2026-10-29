@@ -1,0 +1,12 @@
+services:
+  wasteland-bot:
+    build: .
+    image: wasteland-bot:latest
+    container_name: wasteland-bot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATA_DIR=/app/data
+      - TZ=America/New_York
+    volumes:
+      - ./data:/app/data
